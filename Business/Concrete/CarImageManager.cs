@@ -1,4 +1,5 @@
 ﻿using Business.Abstract;
+using Business.BusinessAspects.Autofac;
 using Business.Constans;
 using Core.Utilities.Business;
 using Core.Utilities.Helpers;
@@ -26,7 +27,7 @@ namespace Business.Concrete
             _fileHelper = fileHelperService;
         }
 
-
+        [SecuredOperation("admin")]
         public IResult Add(IFormFile file, CarImage carImage)
         {
             IResult result = BusinessRules.Run(CheckCarImageLimit(carImage.CarId));
@@ -39,12 +40,14 @@ namespace Business.Concrete
             _carImageDal.Add(carImage);
             return new SuccessResult(Messages.CarImageAdded);
         }
+        [SecuredOperation("admin")]
         public IResult Update(IFormFile file, CarImage carImage)
         {
             carImage.ImagePath = _fileHelper.Update(file, PathConstants.ImagesPath + carImage.ImagePath, PathConstants.ImagesPath);
             _carImageDal.Update(carImage);
             return new SuccessResult(Messages.CarImageUpdated);
         }
+        [SecuredOperation("admin")]
         public IResult Delete(CarImage carImage)
         {
             _fileHelper.Delete(PathConstants.ImagesPath + carImage.ImagePath);
@@ -70,14 +73,12 @@ namespace Business.Concrete
             return new SuccessDataResult<List<CarImage>>(_carImageDal.GetAll(c => c.CarId == carId));
         }
 
-
         private List<CarImage> GetDefaultImage(int carId)
         {
             List<CarImage> carImageDefault = new List<CarImage>();           
             carImageDefault.Add(new CarImage { CarId = carId, Date = DateTime.Now, ImagePath = "DefaultImage.jpg" });
             return carImageDefault;
         }
-
         private IResult CheckCarImageLimit(int carId)
         {
             var result = _carImageDal.GetAll(c => c.CarId == carId).Count;
